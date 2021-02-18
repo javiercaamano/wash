@@ -413,3 +413,111 @@ pub(crate) async fn push_artifact(
         .await?;
     Ok(())
 }
+
+#[cfg(test)]
+mod tests {
+    use super::{handle_command, PullCommand, PushCommand, RegCli, RegCliCommand};
+    use crate::util::{OutputKind, Result};
+    use std::env::set_current_dir;
+    use std::fs::{create_dir, remove_dir_all, File};
+    use std::io::prelude::*;
+    use structopt::StructOpt;
+
+    const TEST_DIR: &str = "_reg_test";
+
+    const ECHO_WASM: &str = "wasmcloud.azurecr.io/echo:0.2.0";
+    const LOGGING_PAR: &str = "wasmcloud.azurecr.io/logging:0.9.1";
+
+    /// Helper struct to allow for initializing test folder and cleaning up after test
+    struct RegTest {
+        test_dir: std::path::PathBuf,
+    }
+
+    impl RegTest {
+        pub fn init() -> Result<Self> {
+            let test_dir = std::env::current_dir()?;
+            create_dir(TEST_DIR)?;
+            set_current_dir(TEST_DIR)?;
+            Ok(RegTest { test_dir })
+        }
+    }
+
+    impl ::std::ops::Drop for RegTest {
+        fn drop(&mut self) {
+            set_current_dir(self.test_dir.clone()).unwrap();
+            remove_dir_all(TEST_DIR).unwrap();
+        }
+    }
+
+    #[actix_rt::test]
+    /// Enumerates multiple options of the `pull` command to ensure API doesn't
+    /// change between versions. This test will fail if `wash reg pull`
+    /// changes syntax, ordering of required elements, or flags.
+    async fn reg_pull_enumerate() -> Result<()> {
+        let _rt = RegTest::init()?;
+        let pull_basic = RegCli::from_iter(&["reg", "pull", ECHO_WASM]);
+        let pull_all_flags =
+            RegCli::from_iter(&["reg", "pull", ECHO_WASM, "--allow-latest", "--insecure"]);
+        let pull_all_options = RegCli::from_iter(&[
+            "reg",
+            "pull",
+            ECHO_WASM,
+            "--destination",
+            "echo_twice.wasm",
+            "--digest",
+            "sha256:a17a163afa8447622055deb049587641a9e23243a6cc4411eb33bd4267214cf3",
+            "--output",
+            "text",
+            "--password",
+            "password",
+            "--user",
+            "user",
+        ]);
+        let cmd_basic = match pull_basic.command {
+            RegCliCommand::Pull { .. } => pull_basic.command,
+            _ => panic!("`reg pull` constructed incorrect command"),
+        };
+        assert!(handle_command(cmd_basic).await.is_ok());
+
+        match pull_all_flags.command.clone() {
+            RegCliCommand::Pull(PullCommand {
+                allow_latest, opts, ..
+            }) => {
+                assert!(allow_latest);
+                assert!(opts.insecure);
+            }
+            _ => panic!("`reg pull` constructed incorrect command"),
+        };
+        //TODO(brooksmtownsend): this errors due to insecure. Try with local registry?
+        assert!(handle_command(pull_all_flags.command).await.is_err());
+
+        match pull_all_options.command.clone() {
+            RegCliCommand::Pull(PullCommand {
+                destination,
+                digest,
+                output,
+                opts,
+                ..
+            }) => {
+                assert_eq!(destination.unwrap(), "echo_twice.wasm");
+                assert_eq!(
+                    digest.unwrap(),
+                    "sha256:a17a163afa8447622055deb049587641a9e23243a6cc4411eb33bd4267214cf3"
+                );
+                assert_eq!(output.kind, OutputKind::Text);
+                assert_eq!(opts.user.unwrap(), "user");
+                assert_eq!(opts.password.unwrap(), "password");
+            }
+            _ => panic!("`reg pull` constructed incorrect command"),
+        };
+        assert!(handle_command(pull_all_options.command).await.is_ok());
+
+        Ok(())
+    }
+
+    #[actix_rt::test]
+    //TODO(brooksmtownsend): For push, we're going to need local registry
+    async fn reg_push_enumerate() -> Result<()> {
+        Ok(())
+    }
+}

@@ -354,7 +354,7 @@ mod tests {
     /// Enumerates multiple options of the `gen` command to ensure API doesn't
     /// change between versions. This test will fail if `wash keys gen <type>`
     /// changes syntax, ordering of required elements, or flags.
-    fn gen_enumerate() {
+    fn keys_gen_enumerate() {
         let key_gen_types = vec![
             "account", "user", "module", "service", "server", "operator", "cluster",
         ];
@@ -406,7 +406,7 @@ mod tests {
     /// Enumerates multiple options of the `get` command to ensure API doesn't
     /// change between versions. This test will fail if `wash keys get`
     /// changes syntax, ordering of required elements, or flags.
-    fn get_enumerate() {
+    fn keys_get_enumerate() {
         const KEYNAME: &str = "getenumerate_test_mykey.nk";
         let path = temp_dir();
         let path = path.join("washgettest");
@@ -428,7 +428,8 @@ mod tests {
             KeysCliCommand::GetCommand { keyname, .. } => assert_eq!(keyname, KEYNAME),
             other_cmd => panic!("keys get generated other command {:?}", other_cmd),
         }
-        // key should not be found
+        // TODO(brooksmtownsend): Handle this in a different way? Key should not be found
+        // perhaps assert error type.
         assert!(handle_command(get_basic.command).is_err());
 
         match get_with_directory.command.clone() {
@@ -463,7 +464,7 @@ mod tests {
     /// Enumerates multiple options of the `list` command to ensure API doesn't
     /// change between versions. This test will fail if `wash keys list`
     /// changes syntax, ordering of required elements, or flags.
-    fn list_enumerate() {
+    fn keys_list_enumerate() {
         const KEYONE: &str = "listenumerate_test_keyone.nk";
         const KEYTWO: &str = "listenumerate_test_keytwo.nk";
         const KEYTHREE: &str = "listenumerate_test_keythree.nk";

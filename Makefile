@@ -1,9 +1,10 @@
 .DEFAULT_GOAL:=help
-TMPDIR ?= /tmp
+TMPDIR ?= /tmp/
 
 ##@ Testing
 
-test: docker_compose_up cargo_test clean## Launch docker compose and run tests
+#TODO: ensure we clean after cargo_test
+test: docker_compose_up cargo_test clean ## Launch docker compose and run tests
 
 #TODO: check for docker and docker compose
 docker_compose_up:
@@ -13,8 +14,8 @@ cargo_test:
 	cargo test -- --nocapture
 
 clean: ## Clean up temporary test resources
-	rm -r ${TMPDIR}/washtest
 	docker-compose -f ./tools/docker-compose.yml down
+	rm -r ${TMPDIR}washtest
 
 ##@ Helpers
 

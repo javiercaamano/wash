@@ -409,7 +409,7 @@ mod tests {
     fn keys_get_enumerate() {
         const KEYNAME: &str = "getenumerate_test_mykey.nk";
         let path = temp_dir();
-        let path = path.join("washgettest");
+        let path = path.join("washtest/keys_get");
         create_dir_all(path.clone()).unwrap();
         let keysdir: &str = &format!("{}", path.to_str().unwrap());
 
@@ -470,7 +470,7 @@ mod tests {
         const KEYTHREE: &str = "listenumerate_test_keythree.nk";
 
         let path = temp_dir();
-        let path = path.join("washlisttest");
+        let path = path.join("washtest/keys_list");
         create_dir_all(path.clone()).unwrap();
         let keysdir: &str = &format!("{}", path.to_str().unwrap());
 
@@ -488,7 +488,7 @@ mod tests {
         file.write_all(b"SUAJEXUECP5MND6DYA7UEL4K4AUI46TOXFTKID3DQF5ZDJB5JWMY4LWIHU")
             .unwrap();
 
-        let list_basic = KeysCli::from_iter(&["keys", "list"]);
+        let list_basic = KeysCli::from_iter(&["keys", "list", "-d", "./"]);
         let list_all_flags = KeysCli::from_iter(&["keys", "list", "-d", keysdir, "-o", "json"]);
 
         match list_basic.command.clone() {

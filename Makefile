@@ -1,5 +1,5 @@
 .DEFAULT_GOAL:=help
-TESTS_DIR := ./test_modules
+TMPDIR ?= /tmp
 
 ##@ Testing
 
@@ -10,11 +10,10 @@ docker_compose_up:
 	docker-compose -f ./tools/docker-compose.yml up --detach
 
 cargo_test: 
-	mkdir -p ${TESTS_DIR}
 	cargo test -- --nocapture
 
 clean: ## Clean up temporary test resources
-	rm -rf ${TESTS_DIR}
+	rm -r ${TMPDIR}/washtest
 	docker-compose -f ./tools/docker-compose.yml down
 
 ##@ Helpers

@@ -419,7 +419,8 @@ mod tests {
     use super::{handle_command, PullCommand, PushCommand, RegCli, RegCliCommand};
     use crate::util::{OutputKind, Result};
     use std::env::set_current_dir;
-    use std::fs::{create_dir, remove_dir_all, File};
+    use std::env::temp_dir;
+    use std::fs::{create_dir_all, remove_dir_all, File};
     use std::io::prelude::*;
     use structopt::StructOpt;
 
@@ -427,19 +428,22 @@ mod tests {
     const LOGGING_PAR: &str = "wasmcloud.azurecr.io/logging:0.9.1";
     const LOCAL_REGISTRY: &str = "localhost:5000";
 
-    const TEST_DIR: &str = "test_modules";
-
     #[actix_rt::test]
     /// Enumerates multiple options of the `pull` command to ensure API doesn't
     /// change between versions. This test will fail if `wash reg pull`
     /// changes syntax, ordering of required elements, or flags.
     async fn reg_pull_enumerate() -> Result<()> {
+        let path = temp_dir();
+        let path = path.join("washtest/reg_pull");
+        create_dir_all(path.clone())?;
+        let test_dir = format!("{}", path.to_str().unwrap());
+
         let pull_basic = RegCli::from_iter(&[
             "reg",
             "pull",
             ECHO_WASM,
             "--destination",
-            &format!("{}/echopull.wasm", TEST_DIR),
+            &format!("{}/echopull.wasm", test_dir),
         ]);
         let pull_all_flags =
             RegCli::from_iter(&["reg", "pull", ECHO_WASM, "--allow-latest", "--insecure"]);
@@ -448,7 +452,7 @@ mod tests {
             "pull",
             ECHO_WASM,
             "--destination",
-            &format!("{}/echotwice.wasm", TEST_DIR),
+            &format!("{}/echotwice.wasm", test_dir),
             "--digest",
             "sha256:a17a163afa8447622055deb049587641a9e23243a6cc4411eb33bd4267214cf3",
             "--output",
@@ -484,7 +488,7 @@ mod tests {
                 opts,
                 ..
             }) => {
-                assert_eq!(destination.unwrap(), format!("{}/echotwice.wasm", TEST_DIR));
+                assert_eq!(destination.unwrap(), format!("{}/echotwice.wasm", test_dir));
                 assert_eq!(
                     digest.unwrap(),
                     "sha256:a17a163afa8447622055deb049587641a9e23243a6cc4411eb33bd4267214cf3"
@@ -509,13 +513,18 @@ mod tests {
     /// `docker-compose` file located in `tools/`. Use the `make test`
     /// command to automatically launch these resources.
     async fn reg_push_enumerate() -> Result<()> {
+        let path = temp_dir();
+        let path = path.join("washtest/reg_pull");
+        create_dir_all(path.clone())?;
+        let test_dir = format!("{}", path.to_str().unwrap());
+
         // Pull echo.wasm for push tests
         let pull_basic = RegCli::from_iter(&[
             "reg",
             "pull",
             ECHO_WASM,
             "--destination",
-            &format!("{}/echopush.wasm", TEST_DIR),
+            &format!("{}/echopush.wasm", test_dir),
         ]);
         assert!(handle_command(pull_basic.command).await.is_ok());
 
@@ -523,7 +532,7 @@ mod tests {
             "reg",
             "push",
             &format!("{}/echo:pushtestbasic", LOCAL_REGISTRY),
-            &format!("{}/echopush.wasm", TEST_DIR),
+            &format!("{}/echopush.wasm", test_dir),
             "--insecure",
         ]);
         assert!(handle_command(push_basic.command).await.is_ok());

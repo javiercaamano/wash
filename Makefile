@@ -1,21 +1,16 @@
 .DEFAULT_GOAL:=help
-TMPDIR ?= /tmp/
 
 ##@ Testing
 
-#TODO: ensure we clean after cargo_test
-test: docker_compose_up cargo_test clean ## Launch docker compose and run tests
+test: ## Run unit test suite
+	cargo test --no-fail-fast --verbose --bin wash -- --nocapture
 
-#TODO: check for docker and docker compose
-docker_compose_up:
+test-integration: ##Run integration test suite
 	docker-compose -f ./tools/docker-compose.yml up --detach
-
-cargo_test: 
-	cargo test -- --nocapture
-
-clean: ## Clean up temporary test resources
+	-cargo test --no-fail-fast --verbose --test "integration*" -- --nocapture
 	docker-compose -f ./tools/docker-compose.yml down
-	rm -r ${TMPDIR}washtest
+
+test-all: test test-integration ## Run all tests
 
 ##@ Helpers
 

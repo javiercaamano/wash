@@ -553,8 +553,6 @@ mod tests {
         };
 
         // Push logging.par.gz to different tag and pull to confirm successful push
-        let mut config = File::create(format!("{}/config.json", TESTDIR))?;
-        config.write_all(b"{}")?;
         let logging_push_all_options = &format!("{}/logging:alloptions", LOCAL_REGISTRY);
         let push_all_options = RegCli::from_iter(&[
             "reg",

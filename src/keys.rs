@@ -460,7 +460,13 @@ mod tests {
             other_cmd => panic!("keys get generated other command {:?}", other_cmd),
         }
         match handle_command(get_all_flags.command) {
-            Ok(res) => assert_eq!(res, String::from_utf8(KEYCONTENTS.to_vec()).unwrap()),
+            Ok(res) => assert_eq!(
+                res,
+                format!(
+                    "{{\"seed\":\"{}\"}}",
+                    String::from_utf8(KEYCONTENTS.to_vec()).unwrap()
+                )
+            ),
             Err(e) => {
                 println!("Error: {:?}", e);
                 panic!("keys get did not successfully retrieve key contents")
